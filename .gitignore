@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Google Colab / Jupyter
+.ipynb_checkpoints/
+
+# Dataset
+input.txt
+data/
+
+# Modelos e checkpoints
+*.pt
+*.pth
+*.ckpt
+out/
+
+# Configuracoes locais
+.env
+.env.*
+!.env.example
