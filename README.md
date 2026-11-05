@@ -6,12 +6,13 @@ Building a character-level GPT language model from scratch using Python and PyTo
 
 - [x] Character-level tokenization
 - [x] Dataset encoding and train/validation split
-- [ ] Data batching
-- [ ] Bigram language model
+- [x] Data batching
+- [x] Bigram language model
 - [ ] Self-attention
 - [ ] Multi-head attention
 - [ ] Transformer architecture
-- [ ] Model training and text generation
+- [x] Autoregressive text generation (untrained Bigram)
+- [ ] Model training and optimization
 
 ## Technologies
 
