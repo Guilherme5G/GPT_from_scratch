@@ -219,10 +219,14 @@ class Block(nn.Module):
         # FeedForward.
         self.ffwd = FeedForward(n_embd)
 
+        #layer normalization
+        self.ln1 = nn.LayerNorm(n_embd)
+        self.ln2 = nn.LayerNorm(n_embd)
+
     def forward(self, x):
         # Aplica Self-Attention e depois FeedForward.
-        x = x + self.sa(x)
-        x = x + self.ffwd(x)
+        x = x + self.sa(self.ln1(x))
+        x = x + self.ffwd(self.ln2(x))
         return x
 
 # ------------------------------------------------------------
