@@ -19,6 +19,7 @@ This repository documents the learning process, intermediate implementations, an
 - [x] Training and validation loss estimation
 - [x] Autoregressive text generation
 
+
 ### Attention and Transformers
 
 - [x] Causal context aggregation using loops
@@ -26,13 +27,15 @@ This repository documents the learning process, intermediate implementations, an
 - [x] Lower-triangular causal masking
 - [x] Masked softmax and numerical equivalence checks
 - [x] Embedding dimension and language-modeling head separation
-- [ ] Positional embeddings
-- [ ] Self-attention (Query, Key, Value)
+- [x] Positional embeddings
+- [x] Scaled dot-product self-attention (Q, K, V)
+- [x] Single-head causal self-attention integration
 - [ ] Multi-head attention
 - [ ] Feedforward layers and residual connections
 - [ ] Transformer blocks and layer normalization
 - [ ] Complete GPT architecture
 - [ ] GPT training and evaluation
+
 
 ## Project Structure
 
@@ -94,6 +97,87 @@ Next-token logits
 ```
 
 This version remains a Bigram model. Contextual token interactions, positional embeddings, and self-attention are not yet implemented.
+
+### Version 3 — Single-Head Causal Self-Attention
+
+**File:** `scripts/v3.py`
+
+Introduces the first attention-based language model following
+the single-head integration stage of Karpathy's lecture.
+
+**Implemented components:**
+
+- Learned token and positional embeddings
+- Query, Key, and Value linear projections
+- Scaled dot-product attention
+- Causal masking using a registered buffer
+- Context-aware next-token prediction
+- Context cropping during autoregressive generation
+
+The model can now aggregate information from previous tokens
+instead of relying exclusively on the current token.
+
+This is a single-head attention model, not yet a complete
+Transformer architecture.
+
+### Version 3 Results
+
+Pending local execution and evaluation.
+```
+
+Adicione também à seção de execução:
+
+```bash
+python scripts/v3.py
+```
+
+**Não registre nenhuma loss da V3 no README antes de executar o treinamento.** Queremos continuar usando somente resultados que você realmente obteve.
+
+---
+
+## 5. Testar no VS Code
+
+Antes do commit, execute na raiz do projeto, com `.venv` ativado:
+
+```bash
+python -m py_compile scripts/v3.py
+python scripts/v3.py
+```
+
+Verifique se o modelo imprime a quantidade de parâmetros, apresenta as losses periódicas e termina gerando texto.
+
+Comparamos depois a validation loss com a do `bigram.py` e da `v2.py`, se você tiver registrado essa última. A expectativa é que uma cabeça de atenção melhore as previsões contextuais, mas não precisamos assumir um resultado antes do experimento.
+
+## 6. Segundo commit — VS Code
+
+Quando o script executar corretamente, utilize:
+
+<box border radius="lg" padding={3} gap={2}>
+  **Commit da implementação**
+  <row align="center" gap={2}>
+    <box background="surface-secondary" radius="md" padding={3} flex="1">
+      <text size="sm" weight="medium">`feat: integrate single-head causal self-attention`</text>
+    </box>
+    <button color="secondary" variant="outline" size="sm" onClick={()=>GenUI.copy("feat: integrate single-head causal self-attention")}>
+      <icon name="copy" size="sm"/>
+    </button>
+  </row>
+</box>
+
+```bash
+git status
+git add scripts/v3.py README.md
+git commit -m "feat: integrate single-head causal self-attention"
+git push origin main
+git status
+```
+
+Se o push for rejeitado por novos commits do Colab, sincronize com `git pull --rebase origin main` e tente novamente, resolvendo qualquer conflito antes de prosseguir.
+
+Ao concluir, teremos três implementações preservadas no GitHub: o Bigram original, a versão com embeddings separados e o modelo com uma cabeça de Self-Attention.
+
+**Nosso próximo tópico será [1:21:59 — Multi-Head Self-Attention](https://www.youtube.com/watch?v=kCc8FmEb1nY&t=4919s).** Ainda não implementei múltiplas cabeças no código acima de propósito: vamos seguir a sequência do Karpathy e entender uma etapa antes de avançar para a seguinte.
+
 
 ## Experimental Results
 
