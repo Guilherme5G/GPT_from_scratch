@@ -178,13 +178,44 @@ These values were obtained from the local Bigram training run.
 
 The model learned local character transition patterns, but its generated text remained largely incoherent because predictions depended only on the current character.
 
-### Transformer-Based GPT
+### Transformer-Based GPT — Final Results
 
-The complete Transformer architecture and its training pipeline have been implemented.
+The decoder-only Transformer was trained on Tiny Shakespeare
+using the following configuration:
 
-Final training and validation metrics have not yet been documented in this repository.
+- Training iterations: 5,000
+- Batch size: 64
+- Context length: 256
+- Embedding dimension: 384
+- Attention heads: 6
+- Transformer blocks: 6
+- Learning rate: 0.0003
+- Optimizer: AdamW
+- Dropout: 0.2
 
-Results from the Transformer will be recorded separately from the Bigram baseline to ensure a meaningful comparison.
+#### Final Training Metrics
+
+| Metric | Loss |
+|---|---:|
+| Training loss (step 4999) | 1.0763 |
+| Validation loss (step 4999) | 1.4873 |
+
+#### Comparison with the Bigram Baseline
+
+| Model | Validation Loss |
+|---|---:|
+| Bigram Language Model | 2.4911 |
+| GPT Transformer | 1.4873 |
+
+The Transformer achieved approximately 40.3% lower
+validation cross-entropy loss than the Bigram baseline.
+
+This improvement demonstrates the benefit of contextual
+information processing through causal self-attention
+and stacked Transformer blocks.
+
+The gap between training and validation losses suggests
+that generalization should be monitored for overfitting.
 
 ## Technologies
 
