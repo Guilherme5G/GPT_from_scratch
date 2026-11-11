@@ -1,15 +1,3 @@
-
-"""
-GPT From Scratch — Version 3
-Single-Head Causal Self-Attention
-
-Based on Andrej Karpathy's "Let's build GPT" lecture.
-Section: 1:19:11–1:21:59
-
-Implements positional embeddings and a single scaled
-self-attention head in the character-level language model.
-"""
-
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -19,17 +7,20 @@ from torch.nn import functional as F
 # Hyperparameters
 # ------------------------------------------------------------
 
-batch_size = 32
-block_size = 8
-max_iters = 10000
+batch_size = 64
+block_size = 256
+max_iters = 5000
 eval_interval = 500
-learning_rate = 1e-3
+learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
-n_embd = 32
+n_embd = 384
+n_head = 6
+n_layer = 6
+dropout = 0.2
+#------------------------------------------------------------
 
 torch.manual_seed(1337)
-
 
 # ------------------------------------------------------------
 # Dataset and tokenization
@@ -127,6 +118,8 @@ class Head(nn.Module):
             torch.tril(torch.ones(block_size, block_size))
         )
 
+        self.dropout = nn.Dropout(dropout)
+
     def forward(self, x):
         # x possui formato (B, T, C).
         B, T, C = x.shape
@@ -153,6 +146,7 @@ class Head(nn.Module):
 
         # Converte os scores em pesos normalizados.
         wei = F.softmax(wei, dim=-1)
+        wei = self.dropout(wei)
 
         # Calcula os Values.
         v = self.value(x)
@@ -176,13 +170,14 @@ class MultiHeadAttention(nn.Module):
 
         # Projeta a saída concatenada das cabeças.
         self.proj = nn.Linear(n_embd, n_embd)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         # Concatena a saída de cada cabeça.
         out = torch.cat([h(x) for h in self.heads], dim=-1)
 
         # Projeta a saída concatenada.
-        out = self.proj(out)
+        out = self.dropout(self.proj(out))
 
         return out
 
@@ -198,7 +193,8 @@ class FeedForward(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(n_embd, 4 * n_embd),
             nn.ReLU(),
-            nn.Linear(4 * n_embd, n_embd)
+            nn.Linear(4 * n_embd, n_embd),
+            nn.Dropout(dropout),
         )
         
     def forward(self, x):
@@ -247,14 +243,11 @@ class BigramLanguageModel(nn.Module):
         self.position_embedding_table = nn.Embedding(
             block_size, n_embd
         )
-        self.blocks = nn.Sequential(
-            Block(n_embd, n_head=4),
-            Block(n_embd, n_head=4),
-            Block(n_embd, n_head=4),
-        )
-
+        self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
+        self.ln_f = nn.LayerNorm(n_embd)  # final layer norm
         # Converte as representações em logits.
         self.lm_head = nn.Linear(n_embd, vocab_size)
+        
 
     def forward(self, idx, targets=None):
         B, T = idx.shape
@@ -273,6 +266,9 @@ class BigramLanguageModel(nn.Module):
 
         # contextualiza os tokens usando Self-Attention.
         x = self.blocks(x)
+
+        # Aplica a normalização da camada final.
+        x = self.ln_f(x)
 
         # Produz scores para os próximos tokens.
         logits = self.lm_head(x)

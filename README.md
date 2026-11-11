@@ -1,41 +1,42 @@
 # GPT From Scratch
 
-A hands-on implementation of a character-level language model using **Python and PyTorch**, following Andrej Karpathy's [*Let's build GPT: from scratch, in code, spelled out*](https://www.youtube.com/watch?v=kCc8FmEb1nY) lecture.
+A character-level GPT language model implemented from scratch using **Python and PyTorch**, following Andrej Karpathy's [*Let's build GPT: from scratch, in code, spelled out*](https://www.youtube.com/watch?v=kCc8FmEb1nY) lecture.
 
-The goal is to understand language models from first principles by progressively implementing tokenization, autoregressive training, causal attention, and the Transformer architecture.
+This project documents the step-by-step implementation of an autoregressive Transformer, from character-level tokenization and a simple Bigram baseline to multi-head causal self-attention, Transformer blocks, and language model training.
 
-This repository documents the learning process, intermediate implementations, and experimental results.
+The objective is to understand the underlying architecture, mathematics, and training process rather than relying on pretrained language models.
 
 ## Learning Progress
 
-### Foundations
+### Language Modeling Fundamentals
 
 - [x] Character-level tokenization
 - [x] Dataset encoding and train/validation split
-- [x] Random data batching
+- [x] Random batch generation
 - [x] Bigram language model
 - [x] Cross-entropy loss
-- [x] Backpropagation and AdamW optimization
+- [x] Backpropagation with PyTorch autograd
+- [x] AdamW optimization
 - [x] Training and validation loss estimation
 - [x] Autoregressive text generation
 
+### Attention and Transformer Architecture
 
-### Attention and Transformers
-
-- [x] Causal context aggregation using loops
-- [x] Matrix multiplication for weighted aggregation
-- [x] Lower-triangular causal masking
-- [x] Masked softmax and numerical equivalence checks
-- [x] Embedding dimension and language-modeling head separation
-- [x] Positional embeddings
-- [x] Scaled dot-product self-attention (Q, K, V)
-- [x] Single-head causal self-attention integration
-- [x] Multi-head attention
-- [x] Feedforward layers and residual connections
-- [ ] Transformer blocks and layer normalization
-- [ ] Complete GPT architecture
-- [ ] GPT training and evaluation
-
+- [x] Context aggregation with loops and matrix multiplication
+- [x] Causal masking and masked softmax
+- [x] Query, Key, and Value projections
+- [x] Scaled dot-product attention
+- [x] Single-head causal self-attention
+- [x] Multi-head self-attention
+- [x] Token and positional embeddings
+- [x] Feedforward neural networks
+- [x] Residual connections
+- [x] Layer normalization
+- [x] Dropout regularization
+- [x] Transformer block implementation
+- [x] Stacked Transformer architecture
+- [x] GPT training and generation pipeline
+- [ ] Document final GPT training metrics
 
 ## Project Structure
 
@@ -43,177 +44,154 @@ This repository documents the learning process, intermediate implementations, an
 GPT_from_scratch/
 ├── scripts/
 │   ├── bigram.py
-│   └── v2.py
+│   ├── v2.py
+│   └── v3.py
 ├── gpt_from_scratch.ipynb
 ├── requirements.txt
 ├── README.md
 └── .gitignore
 ```
 
-The local `.venv/` environment and `input.txt` dataset are excluded from version control.
+The notebook contains learning notes, mathematical explanations, and experiments. The Python scripts preserve the evolution of the model throughout the lecture.
 
-## Implementations
+The local `.venv/` directory and Tiny Shakespeare `input.txt` are excluded from version control.
+
+## Model Implementations
 
 ### Version 1 — Bigram Language Model
 
 **File:** `scripts/bigram.py`
 
-A baseline character-level language model using a trainable embedding lookup table that directly produces next-token logits.
+A baseline language model that predicts the next character using only the current character.
 
-**Implemented concepts:**
+Features include a trainable token lookup table, cross-entropy loss, AdamW optimization, validation loss estimation, and autoregressive text generation.
 
-- Character-level encoding and decoding
-- Random batches of token sequences
-- Cross-entropy loss
-- AdamW optimization
-- Train/validation evaluation
-- Autoregressive generation
-
-The model predicts the next character using only the current character.
+This model establishes a baseline before introducing contextual attention.
 
 ### Version 2 — Embedding and Language Modeling Head
 
 **File:** `scripts/v2.py`
 
-A refactored Bigram model following the *Minor Code Cleanup* section of Karpathy's lecture.
+Refactors the initial model by separating token representations from next-token prediction.
 
-Changes include:
+Introduces:
 
-- Introduction of `n_embd = 32`
-- Token embeddings separated from next-token logits
-- A linear language-modeling head (`lm_head`)
-- Simplified model initialization
+- Token embeddings with 32 dimensions
+- A separate linear language modeling head
+- An intermediate representation suitable for future architectural extensions
 
-The new computation is:
+This version does not yet perform contextual token interactions.
 
-```text
-Token IDs
-   ↓
-Embedding(vocab_size, n_embd)
-   ↓
-Linear(n_embd, vocab_size)
-   ↓
-Next-token logits
-```
-
-This version remains a Bigram model. Contextual token interactions, positional embeddings, and self-attention are not yet implemented.
-
-### Version 3 — Single-Head Causal Self-Attention
+### Version 3 — Transformer-Based GPT
 
 **File:** `scripts/v3.py`
 
-Introduces the first attention-based language model following
-the single-head integration stage of Karpathy's lecture.
+Implements the main components of a decoder-only, autoregressive Transformer.
 
-**Implemented components:**
+The architecture includes:
 
-- Learned token and positional embeddings
-- Query, Key, and Value linear projections
-- Scaled dot-product attention
-- Causal masking using a registered buffer
-- Context-aware next-token prediction
-- Context cropping during autoregressive generation
+- Character-level token and positional embeddings
+- Multi-head causal self-attention
+- Scaled Query-Key dot products
+- Learned Value projections
+- Feedforward networks with ReLU activation
+- Residual connections
+- Layer normalization
+- Dropout regularization
+- Stacked Transformer blocks
+- Linear language modeling head
 
-The model can now aggregate information from previous tokens
-instead of relying exclusively on the current token.
+The model predicts the next character using representations built from the available context.
 
-This is a single-head attention model, not yet a complete
-Transformer architecture.
+## GPT Architecture
 
-### Version 3 Results
+The final implementation uses the following configuration:
 
-Pending local execution and evaluation.
+| Hyperparameter | Value |
+|---|---:|
+| Batch size | 64 |
+| Context length | 256 tokens |
+| Embedding dimension | 384 |
+| Attention heads | 6 |
+| Dimensions per head | 64 |
+| Transformer blocks | 6 |
+| Dropout | 0.2 |
+| Optimizer | AdamW |
+| Learning rate | 0.0003 |
+| Configured training iterations | 5,000 |
+
+### Architecture Overview
+
+```text
+Input Text
+    |
+Character-Level Tokenization
+    |
+Token Embeddings + Positional Embeddings
+    |
+6 x Transformer Blocks
+    |-- LayerNorm
+    |-- Multi-Head Causal Self-Attention
+    |-- Residual Connection
+    |-- LayerNorm
+    |-- FeedForward Network
+    |-- Residual Connection
+    |
+Final LayerNorm
+    |
+Linear Language Modeling Head
+    |
+Next-Token Logits
+    |
+Autoregressive Text Generation
 ```
 
-Adicione também à seção de execução:
+Each attention head independently computes relationships between tokens. Causal masking prevents a token from accessing future positions.
 
-```bash
-python scripts/v3.py
-```
+The feedforward layers process the representations at each position, while residual connections and layer normalization support optimization across multiple blocks.
 
-**Não registre nenhuma loss da V3 no README antes de executar o treinamento.** Queremos continuar usando somente resultados que você realmente obteve.
+## Dataset
 
----
+The project uses the **Tiny Shakespeare** dataset, a collection of Shakespearean text commonly used for character-level language modeling experiments.
 
-## 5. Testar no VS Code
+- Tokenization: character-level
+- Training split: 90%
+- Validation split: 10%
+- Objective: next-character prediction
 
-Antes do commit, execute na raiz do projeto, com `.venv` ativado:
-
-```bash
-python -m py_compile scripts/v3.py
-python scripts/v3.py
-```
-
-Verifique se o modelo imprime a quantidade de parâmetros, apresenta as losses periódicas e termina gerando texto.
-
-Comparamos depois a validation loss com a do `bigram.py` e da `v2.py`, se você tiver registrado essa última. A expectativa é que uma cabeça de atenção melhore as previsões contextuais, mas não precisamos assumir um resultado antes do experimento.
-
-## 6. Segundo commit — VS Code
-
-Quando o script executar corretamente, utilize:
-
-<box border radius="lg" padding={3} gap={2}>
-  **Commit da implementação**
-  <row align="center" gap={2}>
-    <box background="surface-secondary" radius="md" padding={3} flex="1">
-      <text size="sm" weight="medium">`feat: integrate single-head causal self-attention`</text>
-    </box>
-    <button color="secondary" variant="outline" size="sm" onClick={()=>GenUI.copy("feat: integrate single-head causal self-attention")}>
-      <icon name="copy" size="sm"/>
-    </button>
-  </row>
-</box>
-
-```bash
-git status
-git add scripts/v3.py README.md
-git commit -m "feat: integrate single-head causal self-attention"
-git push origin main
-git status
-```
-
-Se o push for rejeitado por novos commits do Colab, sincronize com `git pull --rebase origin main` e tente novamente, resolvendo qualquer conflito antes de prosseguir.
-
-Ao concluir, teremos três implementações preservadas no GitHub: o Bigram original, a versão com embeddings separados e o modelo com uma cabeça de Self-Attention.
-
-**Nosso próximo tópico será [1:21:59 — Multi-Head Self-Attention](https://www.youtube.com/watch?v=kCc8FmEb1nY&t=4919s).** Ainda não implementei múltiplas cabeças no código acima de propósito: vamos seguir a sequência do Karpathy e entender uma etapa antes de avançar para a seguinte.
-
+The dataset is downloaded locally and is not included in the repository.
 
 ## Experimental Results
 
 ### Bigram Baseline
 
-**Dataset:** Tiny Shakespeare  
-**Training iterations:** 3,000  
-**Optimizer:** AdamW  
-**Batch size:** 32  
-**Context length:** 8
+The baseline Bigram model was trained for 3,000 iterations.
 
-| Metric | Loss |
+| Metric | Cross-Entropy Loss |
 |---|---:|
 | Initial training loss (step 0) | 4.7305 |
 | Initial validation loss (step 0) | 4.7241 |
 | Last reported training loss (step 2700) | 2.4738 |
 | Last reported validation loss (step 2700) | 2.4911 |
 
-**Observations:**
+These values were obtained from the local Bigram training run.
 
-Training and validation losses decreased substantially, indicating that the model learned local character transition patterns.
+The model learned local character transition patterns, but its generated text remained largely incoherent because predictions depended only on the current character.
 
-Generated samples remain largely incoherent because the baseline model cannot integrate information from earlier tokens beyond the current character.
+### Transformer-Based GPT
 
-The losses above refer specifically to `bigram.py`.
+The complete Transformer architecture and its training pipeline have been implemented.
 
-### Version 2 Results
+Final training and validation metrics have not yet been documented in this repository.
 
-Pending local execution and evaluation. Results will be recorded separately to avoid mixing measurements from different implementations.
+Results from the Transformer will be recorded separately from the Bigram baseline to ensure a meaningful comparison.
 
 ## Technologies
 
 - Python
 - PyTorch
 - NumPy
-- Google Colab
+- Google Colab / Jupyter
 - Visual Studio Code
 - NVIDIA CUDA
 
@@ -226,53 +204,57 @@ git clone https://github.com/Guilherme5G/GPT_from_scratch.git
 cd GPT_from_scratch
 ```
 
-Create and activate a virtual environment on Windows using Git Bash:
+Create and activate a Python virtual environment on Windows using Git Bash:
 
 ```bash
 python -m venv .venv
 source .venv/Scripts/activate
 ```
 
-Install dependencies:
+Install the project dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-For CUDA-enabled PyTorch installations, refer to the [official PyTorch installation guide](https://pytorch.org/get-started/locally/).
+For GPU acceleration, install a CUDA-enabled version of PyTorch compatible with your system, following the [official installation instructions](https://pytorch.org/get-started/locally/).
 
-Download Tiny Shakespeare into the project root:
+Download Tiny Shakespeare into the repository root:
 
 ```bash
 curl -L https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt -o input.txt
 ```
 
-Run the baseline:
+Run the implementations:
 
 ```bash
+# Original Bigram baseline
 python scripts/bigram.py
-```
 
-Run Version 2:
-
-```bash
+# Embedding and language modeling head
 python scripts/v2.py
+
+# Transformer-based GPT
+python scripts/v3.py
 ```
 
-Both scripts train their models, estimate training and validation losses, and generate sample text. They use CUDA when a compatible PyTorch environment and GPU are available.
+The scripts execute their configured training loops, estimate training and validation losses, and generate sample text.
+
+**Note:** The Transformer training script does not currently save checkpoints. Running it again initializes a new model rather than resuming a previous training run.
 
 ## References and Attribution
 
-This educational project follows and adapts the work presented by Andrej Karpathy. The implementations are based on his lecture and accompanying code, with additional learning notes, documentation, and experiments.
+This is an educational implementation following Andrej Karpathy's lecture and accompanying code. It documents my study process, code adaptations, and experiments.
 
-- [Andrej Karpathy — Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)
-- [Official Lecture Repository (MIT License)](https://github.com/karpathy/ng-video-lecture)
+- [Andrej Karpathy — Let's build GPT: from scratch, in code, spelled out](https://www.youtube.com/watch?v=kCc8FmEb1nY)
+- [Official Lecture Repository — ng-video-lecture](https://github.com/karpathy/ng-video-lecture)
 - [PyTorch Documentation](https://docs.pytorch.org/docs/stable/index.html)
+- [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 
 ## Project Status
 
-**Work in progress — Foundations of Self-Attention.**
+**Lecture implementation completed — final experimental evaluation pending.**
 
-The Bigram baseline is implemented and trained. Version 2 introduces an intermediate embedding representation and a language-modeling head.
+The progression from a Bigram baseline to a decoder-only Transformer has been implemented. The next step is to document the final model's observed training results and evaluate its generated text.
 
-The next milestone is positional encoding, followed by the first implementation of causal self-attention using Query, Key, and Value projections.
+This implementation is an educational character-level language model, not a reproduction of the original pretrained GPT-2.
