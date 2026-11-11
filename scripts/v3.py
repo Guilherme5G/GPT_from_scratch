@@ -163,6 +163,46 @@ class Head(nn.Module):
 
         return out
 
+class MultiHeadAttention(nn.Module):
+    """Múltiplas cabeças de Self-Attention."""
+
+    def __init__(self, num_heads, head_size):
+        super().__init__()
+
+        # Cria várias cabeças de Self-Attention.
+        self.heads = nn.ModuleList(
+            [Head(head_size) for _ in range(num_heads)]
+        )
+
+        # Projeta a saída concatenada das cabeças.
+        self.proj = nn.Linear(n_embd, n_embd)
+
+    def forward(self, x):
+        # Concatena a saída de cada cabeça.
+        out = torch.cat([h(x) for h in self.heads], dim=-1)
+
+        # Projeta a saída concatenada.
+        out = self.proj(out)
+
+        return out
+
+# FeedForward: processa individualmente as representações
+# de cada posição após a comunicação feita pelo Self-Attention.
+class FeedForward(nn.Module):
+    """Rede neural feed-forward simples."""
+
+    def __init__(self, n_embd):
+        super().__init__()
+
+        # Uma camada linear seguida de ReLU e outra linear.
+        self.net = nn.Sequential(
+            nn.Linear(n_embd,  n_embd),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 
 # ------------------------------------------------------------
 # Language Model — Version 3
@@ -178,15 +218,17 @@ class BigramLanguageModel(nn.Module):
             vocab_size, n_embd
         )
 
-        # NOVO: representação treinável da posição.
+        # representação treinável da posição.
         self.position_embedding_table = nn.Embedding(
             block_size, n_embd
         )
 
-        # NOVO: uma cabeça de Self-Attention.
+        # uma cabeça de Self-Attention.
         # head_size = n_embd mantém 32 características
         # na saída, compatíveis com a LM Head.
-        self.sa_head = Head(n_embd)
+        self.sa_heads = MultiHeadAttention(4, n_embd // 4)
+
+        self.ffwd = FeedForward(n_embd)
 
         # Converte as representações em logits.
         self.lm_head = nn.Linear(n_embd, vocab_size)
@@ -206,8 +248,11 @@ class BigramLanguageModel(nn.Module):
         # Broadcasting: (B,T,C) + (T,C) -> (B,T,C)
         x = tok_emb + pos_emb
 
-        # NOVO: contextualiza os tokens usando Self-Attention.
-        x = self.sa_head(x)
+        # contextualiza os tokens usando Self-Attention.
+        x = self.sa_heads(x)
+
+        # Aplica a feed-forward.
+        x = self.ffwd(x)
 
         # Produz scores para os próximos tokens.
         logits = self.lm_head(x)
