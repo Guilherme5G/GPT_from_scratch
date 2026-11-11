@@ -30,8 +30,8 @@ This repository documents the learning process, intermediate implementations, an
 - [x] Positional embeddings
 - [x] Scaled dot-product self-attention (Q, K, V)
 - [x] Single-head causal self-attention integration
-- [ ] Multi-head attention
-- [ ] Feedforward layers and residual connections
+- [x] Multi-head attention
+- [x] Feedforward layers and residual connections
 - [ ] Transformer blocks and layer normalization
 - [ ] Complete GPT architecture
 - [ ] GPT training and evaluation
