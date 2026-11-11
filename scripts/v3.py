@@ -196,13 +196,34 @@ class FeedForward(nn.Module):
 
         # Uma camada linear seguida de ReLU e outra linear.
         self.net = nn.Sequential(
-            nn.Linear(n_embd,  n_embd),
+            nn.Linear(n_embd, 4 * n_embd),
             nn.ReLU(),
+            nn.Linear(4 * n_embd, n_embd)
         )
-
+        
     def forward(self, x):
         return self.net(x)
 
+
+class Block(nn.Module):
+    """Um bloco Transformer: Self-Attention seguido de FeedForward."""
+
+    def __init__(self, n_embd, n_head):
+        # n_embd: embendding dimension, n_head: the number of heads we'd like
+        super().__init__()
+        head_size = n_embd // n_head
+
+        # Uma cabeça de Self-Attention.
+        self.sa = MultiHeadAttention(n_head, head_size)
+
+        # FeedForward.
+        self.ffwd = FeedForward(n_embd)
+
+    def forward(self, x):
+        # Aplica Self-Attention e depois FeedForward.
+        x = x + self.sa(x)
+        x = x + self.ffwd(x)
+        return x
 
 # ------------------------------------------------------------
 # Language Model — Version 3
@@ -222,13 +243,11 @@ class BigramLanguageModel(nn.Module):
         self.position_embedding_table = nn.Embedding(
             block_size, n_embd
         )
-
-        # uma cabeça de Self-Attention.
-        # head_size = n_embd mantém 32 características
-        # na saída, compatíveis com a LM Head.
-        self.sa_heads = MultiHeadAttention(4, n_embd // 4)
-
-        self.ffwd = FeedForward(n_embd)
+        self.blocks = nn.Sequential(
+            Block(n_embd, n_head=4),
+            Block(n_embd, n_head=4),
+            Block(n_embd, n_head=4),
+        )
 
         # Converte as representações em logits.
         self.lm_head = nn.Linear(n_embd, vocab_size)
@@ -249,10 +268,7 @@ class BigramLanguageModel(nn.Module):
         x = tok_emb + pos_emb
 
         # contextualiza os tokens usando Self-Attention.
-        x = self.sa_heads(x)
-
-        # Aplica a feed-forward.
-        x = self.ffwd(x)
+        x = self.blocks(x)
 
         # Produz scores para os próximos tokens.
         logits = self.lm_head(x)
